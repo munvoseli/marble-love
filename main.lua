@@ -1,6 +1,11 @@
 local orange = {}
 orange.type = "multiline"
 cursor = {}
+if true then
+	h = {}
+	h.type = "line"
+	table.insert(orange, h)
+end
 
 Curt = {
 	glyph = 0,
@@ -54,9 +59,9 @@ end
 function getCursor(upcur, t)
 	cur = {}
 	for i=1,#upcur do
-		cur[i] = upcur[i]
+		table.insert(cur, upcur[i])
 	end
-	cur[#upcur] = 0
+	table.insert(cur, 0)
 	r = {}
 	r.xa = 0
 	r.xb = 40
@@ -85,9 +90,9 @@ function getPurple(o, upcur, n)
 	cur = {}
 	if upcur ~= nil then
 		for i=1,#upcur do
-			cur[i] = upcur[i]
+			table.insert(cur, upcur[i])
 		end
-		cur[#upcur] = n
+		table.insert(cur, n)
 	end
 	if o.type == "gly" then
 		r = {}
@@ -123,8 +128,14 @@ function getPurple(o, upcur, n)
 		p = getCursor(cur, "line-new")
 		for i = 1,#o do
 			sp = getPurple(o[i], cur, i)
-			translatePurple(sp, p.ya - sp.yb)
+			pp = getCursor(cur, "line-block")
+			translatePurple(sp, pp.xb, p.ya - sp.yb)
+			translatePurple(pp, 0, p.ya - sp.yb)
 			addPurple(p, sp)
+			addPurple(p, pp)
+			spn = getCursor(cur, "line-new")
+			translatePurple(spn, 0, p.ya - spn.yb)
+			addPurple(p, spn)
 		end
 		return p
 	end
@@ -137,25 +148,7 @@ function drawPurple(p)
 	cam.ty = 0
 	cam.sx = 1
 	cam.sy = 1
---	print(string.format("drawing %d glyphs", #p.glyphs))
 	for i=1,#p.glyphs do
---		x = p.glyphs[i].ref.xa
---		y = p.glyphs[i].ref.ya
---		w = p.glyphs[i].ref.xb - p.glyphs[i].ref.xa
---		h = p.glyphs[i].ref.yb - p.glyphs[i].ref.ya
---
---		x = x * p.glyphs[i].sx
---		y = y * p.glyphs[i].sy
---		w = w * p.glyphs[i].sx
---		h = h * p.glyphs[i].sy
---
---		x = x + p.glyphs[i].tx
---		y = y + p.glyphs[i].tx
---
---		x = (x + cam.tx) * cam.sx
---		y = (y + cam.ty) * cam.sy
---		w = w * cam.sx
---		h = h * cam.sy
 		x = p.glyphs[i].xa
 		y = p.glyphs[i].ya
 		w = p.glyphs[i].xb - x
@@ -183,6 +176,22 @@ function purpleGenGlyphBounds(p)
 	end
 end
 
+function insertAtCursor(cur, curt)
+	o = orange
+--	for i=1,#cur-1 do
+--		o = o[cur[i]]
+--	end
+	i = cur[#cur-1]
+	print("  " .. curt)
+end
+
+function printPurple(p)
+	for i=1,#p.glyphs do
+		print(i, p.glyphs[i].curt, p.glyphs[i].xa, p.glyphs[i].xb, p.glyphs[i].ya, p.glyphs[i].yb)
+	end
+end
+
+hd = 0
 function love.draw()
 	p = getPurple(orange)
 	cameraPurple(p, 100, 100)
@@ -191,14 +200,28 @@ function love.draw()
 --		print(v.xa, v.ya, v.xb, v.yb)
 --	end
 	x, y = love.mouse.getPosition()
+	printPurple(p)
 	for i=1,#p.glyphs do
 		if x > p.glyphs[i].xa and x < p.glyphs[i].xb and
 		   y > p.glyphs[i].ya and y < p.glyphs[i].yb then
-			print("hovering over")
+			io.write("hovering over")
+			curt = p.glyphs[i].curt
 			for j=1,#p.glyphs[i].cur do
-				print(p.glyphs[i].cur[i])
+				io.write(" ")
+				io.write(p.glyphs[i].cur[i])
 			end
+			io.write("\n")
+			insertAtCursor(p.glyphs[i].cur, curt)
 		end
 	end
+	io.flush()
+--	print(string.format("drawing %d glyphs", #p.glyphs))
 	drawPurple(p)
+	if hd > 0 then
+		love.timer.sleep(1)
+	end
+	hd = hd + 1
+end
+
+function love.update(dt)
 end
