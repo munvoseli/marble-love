@@ -1,29 +1,29 @@
 local orange = {}
 orange.type = "multiline"
-cursor = {}
+local cursor = {}
 if true then
-	hhh = {}
+	local hhh = {}
 	hhh.type = "line"
 	table.insert(orange, hhh)
 end
 
-Curt = {
+local Curt = {
 	glyph = 0,
 	line = 1,
 	multiline = 2
 }
 
-function addPurple(a, b)
+local function addPurple(a, b)
 	for i=1,#b.glyphs do
 		table.insert(a.glyphs, b.glyphs[i])
 	end
-	a.xa = math.max(a.xa, b.xa)
+	a.xa = math.min(a.xa, b.xa)
 	a.ya = math.max(a.ya, b.ya)
-	a.xb = math.max(a.xb, b.xb)
+	a.xb = math.min(a.xb, b.xb)
 	a.yb = math.max(a.yb, b.yb)
 end
 
-function translatePurple(p, x, y)
+local function translatePurple(p, x, y)
 	p.xa = p.xa + x
 	p.xb = p.xb + x
 	p.ya = p.ya + y
@@ -33,7 +33,7 @@ function translatePurple(p, x, y)
 		p.glyphs[i].ty = p.glyphs[i].tx + y
 	end
 end
-function scalePurple(p, x, y)
+local function scalePurple(p, x, y)
 	p.xa = p.xa * x
 	p.xb = p.xb * x
 	p.ya = p.ya * y
@@ -46,8 +46,8 @@ function scalePurple(p, x, y)
 	end
 end
 
-function emptyPurple()
-	p = {}
+local function emptyPurple()
+	local p = {}
 	p.xa = 0
 	p.ya = 0
 	p.xb = 0
@@ -56,23 +56,23 @@ function emptyPurple()
 	return p
 end
 
-function getCursor(upcur, t)
-	cur = {}
+local function getCursor(upcur, t)
+	local cur = {}
 	for i=1,#upcur do
 		table.insert(cur, upcur[i])
 	end
 	table.insert(cur, 0)
-	r = {}
+	local r = {}
 	r.xa = 0
 	r.xb = 40
 	r.ya = 0
 	r.yb = 40
-	p = {}
+	local p = {}
 	p.xa = r.xa
 	p.xb = r.xb
 	p.ya = r.ya
 	p.yb = r.yb
-	g = {}
+	local g = {}
 	g.tx = 0
 	g.ty = 0
 	g.sx = 1
@@ -86,8 +86,8 @@ function getCursor(upcur, t)
 end
 
 
-function getPurple(o, upcur, n)
-	cur = {}
+local function getPurple(o, upcur, n)
+	local cur = {}
 	if upcur ~= nil then
 		for i=1,#upcur do
 			table.insert(cur, upcur[i])
@@ -95,17 +95,17 @@ function getPurple(o, upcur, n)
 		table.insert(cur, n)
 	end
 	if o.type == "gly" then
-		r = {}
+		local r = {}
 		r.xa = 0
 		r.xb = 40
 		r.ya = -20
 		r.yb = 60
-		p = {}
+		local p = {}
 		p.xa = r.xa
 		p.xb = r.xb
 		p.ya = r.ya
 		p.yb = r.yb
-		g = {}
+		local g = {}
 		g.tx = 0
 		g.ty = 0
 		g.sx = 1
@@ -113,32 +113,28 @@ function getPurple(o, upcur, n)
 		g.ref = r
 		g.cur = cur
 		g.curt = "glyph"
-		p.glyphs = g
+		p.glyphs = {}
+		table.insert(p.glyphs, g)
 		return p
 	elseif o.type == "line" then
-		p = emptyPurple()
+		local p = emptyPurple()
 		for i=1,#o do
-			sp = getPurple(o[i], cur, i)
+			local sp = getPurple(o[i], cur, i)
 			translatePurple(sp, 0, p.xb - sp.xa)
 			addPurple(p, sp)
 		end
 		return p
 	elseif o.type == "multiline" then
 		-- p = emptyPurple()
-		p = getCursor(cur, "line-new")
-		print(p, p.glyphs)
+		local p = getCursor(cur, "line-new")
 		for i = 1,#o do
-			sp = getPurple(o[i], cur, i)
-			pp = getCursor(cur, "line-block")
+			local sp = getPurple(o[i], cur, i)
+			local pp = getCursor(cur, "line-block")
 			translatePurple(sp, pp.xb, p.ya - sp.yb)
 			translatePurple(pp, 0, p.ya - sp.yb)
-			print(p, pp)
-			print(p.glyphs, pp.glyphs)
-			--print(#p.glyphs, #sp.glyphs, #pp.glyphs)
 			addPurple(p, sp)
 			addPurple(p, pp)
-			print(#sp.glyphs, #pp.glyphs)
-			spn = getCursor(cur, "line-new")
+			local spn = getCursor(cur, "line-new")
 			translatePurple(spn, 0, p.ya - spn.yb)
 			addPurple(p, spn)
 		end
@@ -147,28 +143,29 @@ function getPurple(o, upcur, n)
 	assert(false, string.format("Type %s not handled.", o.type))
 end
 
-function drawPurple(p)
-	cam = {}
+local function drawPurple(p)
+	local cam = {}
 	cam.tx = 0
 	cam.ty = 0
 	cam.sx = 1
 	cam.sy = 1
 	for i=1,#p.glyphs do
-		x = p.glyphs[i].xa
-		y = p.glyphs[i].ya
-		w = p.glyphs[i].xb - x
-		h = p.glyphs[i].yb - y
+		local x = p.glyphs[i].xa
+		local y = p.glyphs[i].ya
+		local w = p.glyphs[i].xb - x
+		local h = p.glyphs[i].yb - y
 		love.graphics.rectangle("fill", x, y, w, h)
 	end
 end
 
-function cameraPurple(p, w, h)
+local function cameraPurple(p, w, h)
+	print(p.xa, p.xb, p.ya, p.yb)
 	translatePurple(p, -p.xa, -p.ya)
-	h = w / p.xb
-	scalePurple(p, h, h)
+	local j = w / p.xb
+	scalePurple(p, j, j)
 end
 
-function purpleGenGlyphBounds(p)
+local function purpleGenGlyphBounds(p)
 	for i=1,#p.glyphs do
 		p.glyphs[i].xa =
 		 p.glyphs[i].ref.xa * p.glyphs[i].sx + p.glyphs[i].tx;
@@ -181,37 +178,37 @@ function purpleGenGlyphBounds(p)
 	end
 end
 
-function insertAtCursor(cur, curt)
-	o = orange
+local function insertAtCursor(cur, curt)
+	local o = orange
 --	for i=1,#cur-1 do
 --		o = o[cur[i]]
 --	end
-	i = cur[#cur-1]
+	local i = cur[#cur-1]
 	print("  " .. curt)
 end
 
-function printPurple(p)
+local function printPurple(p)
 	for i=1,#p.glyphs do
 		print(i, p.glyphs[i].curt, p.glyphs[i].xa, p.glyphs[i].xb, p.glyphs[i].ya, p.glyphs[i].yb)
 	end
 end
 
-hd = 0
+local hd = 0
 function love.draw()
-	p = getPurple(orange)
+	local p = getPurple(orange)
 	cameraPurple(p, 100, 100)
 	purpleGenGlyphBounds(p)
 --	for k,v in pairs(p.glyphs) do
 --		print(v.xa, v.ya, v.xb, v.yb)
 --	end
-	x, y = love.mouse.getPosition()
+	local x, y = love.mouse.getPosition()
 	printPurple(p)
 	for i=1,#p.glyphs do
 		if x > p.glyphs[i].xa and x < p.glyphs[i].xb and
 		   y > p.glyphs[i].ya and y < p.glyphs[i].yb then
 			io.write("hovering over")
-			curt = p.glyphs[i].curt
-			for j=1,#p.glyphs[i].cur do
+			local curt = p.glyphs[i].curt
+			for _=1,#p.glyphs[i].cur do
 				io.write(" ")
 				io.write(p.glyphs[i].cur[i])
 			end
@@ -226,7 +223,4 @@ function love.draw()
 		love.timer.sleep(1)
 	end
 	hd = hd + 1
-end
-
-function love.update(dt)
 end
