@@ -13,13 +13,26 @@ local Curt = {
 	multiline = 2
 }
 
+local function printPurple(p)
+	for i=1,#p.glyphs do
+		print(i, p.glyphs[i].curt, p.glyphs[i].xa, p.glyphs[i].xb, p.glyphs[i].ya, p.glyphs[i].yb)
+	end
+end
+
+local function printPurpleTS(p)
+	print(#p.glyphs, p.xa, p.ya, p.xb, p.yb)
+	for i=1,#p.glyphs do
+		print(i, p.glyphs[i].curt, p.glyphs[i].tx, p.glyphs[i].ty, p.glyphs[i].sx, p.glyphs[i].sy)
+	end
+end
+
 local function addPurple(a, b)
 	for i=1,#b.glyphs do
 		table.insert(a.glyphs, b.glyphs[i])
 	end
 	a.xa = math.min(a.xa, b.xa)
-	a.ya = math.max(a.ya, b.ya)
-	a.xb = math.min(a.xb, b.xb)
+	a.ya = math.min(a.ya, b.ya)
+	a.xb = math.max(a.xb, b.xb)
 	a.yb = math.max(a.yb, b.yb)
 end
 
@@ -30,7 +43,7 @@ local function translatePurple(p, x, y)
 	p.yb = p.yb + y
 	for i=1,#p.glyphs do
 		p.glyphs[i].tx = p.glyphs[i].tx + x
-		p.glyphs[i].ty = p.glyphs[i].tx + y
+		p.glyphs[i].ty = p.glyphs[i].ty + y
 	end
 end
 local function scalePurple(p, x, y)
@@ -159,8 +172,10 @@ local function drawPurple(p)
 end
 
 local function cameraPurple(p, w, h)
-	print(p.xa, p.xb, p.ya, p.yb)
+	-- print(p.xa, p.xb, p.ya, p.yb)
+	print(-p.xa, -p.ya)
 	translatePurple(p, -p.xa, -p.ya)
+	printPurpleTS(p)
 	local j = w / p.xb
 	scalePurple(p, j, j)
 end
@@ -187,30 +202,24 @@ local function insertAtCursor(cur, curt)
 	print("  " .. curt)
 end
 
-local function printPurple(p)
-	for i=1,#p.glyphs do
-		print(i, p.glyphs[i].curt, p.glyphs[i].xa, p.glyphs[i].xb, p.glyphs[i].ya, p.glyphs[i].yb)
-	end
-end
-
 local hd = 0
 function love.draw()
 	local p = getPurple(orange)
 	cameraPurple(p, 100, 100)
 	purpleGenGlyphBounds(p)
+	--printPurple(p)
 --	for k,v in pairs(p.glyphs) do
 --		print(v.xa, v.ya, v.xb, v.yb)
 --	end
 	local x, y = love.mouse.getPosition()
-	printPurple(p)
 	for i=1,#p.glyphs do
 		if x > p.glyphs[i].xa and x < p.glyphs[i].xb and
 		   y > p.glyphs[i].ya and y < p.glyphs[i].yb then
 			io.write("hovering over")
 			local curt = p.glyphs[i].curt
-			for _=1,#p.glyphs[i].cur do
+			for j=1,#p.glyphs[i].cur do
 				io.write(" ")
-				io.write(p.glyphs[i].cur[i])
+				io.write(p.glyphs[i].cur[j])
 			end
 			io.write("\n")
 			insertAtCursor(p.glyphs[i].cur, curt)
