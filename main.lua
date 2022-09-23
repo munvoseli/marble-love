@@ -69,12 +69,12 @@ local function emptyPurple()
 	return p
 end
 
-local function getCursor(upcur, t)
+local function getCursorN(upcur, t, n)
 	local cur = {}
 	for i=1,#upcur do
 		table.insert(cur, upcur[i])
 	end
-	table.insert(cur, 0)
+	table.insert(cur, n)
 	local r = {}
 	r.xa = 0
 	r.xb = 40
@@ -96,6 +96,10 @@ local function getCursor(upcur, t)
 	p.glyphs = {}
 	table.insert(p.glyphs, g)
 	return p
+end
+
+local function getCursor(upcur, t)
+	return getCursorN(upcur, t, 0)
 end
 
 
@@ -138,17 +142,16 @@ local function getPurple(o, upcur, n)
 		end
 		return p
 	elseif o.type == "multiline" then
-		-- p = emptyPurple()
-		local p = getCursor(cur, "line-new")
+		local p = getCursorN(cur, "line-new", 1)
 		for i = 1,#o do
 			local sp = getPurple(o[i], cur, i)
-			local pp = getCursor(cur, "line-block")
-			translatePurple(sp, pp.xb, p.ya - sp.yb)
-			translatePurple(pp, 0, p.ya - sp.yb)
+			local pp = getCursorN(cur, "line-block", i)
+			translatePurple(sp, pp.xb - pp.xa, p.ya - sp.yb)
+			translatePurple(pp, 0, p.yb - sp.ya)
 			addPurple(p, sp)
 			addPurple(p, pp)
-			local spn = getCursor(cur, "line-new")
-			translatePurple(spn, 0, p.ya - spn.yb)
+			local spn = getCursorN(cur, "line-new", i + 1)
+			translatePurple(spn, 0, p.yb - spn.ya)
 			addPurple(p, spn)
 		end
 		return p
@@ -172,10 +175,7 @@ local function drawPurple(p)
 end
 
 local function cameraPurple(p, w, h)
-	-- print(p.xa, p.xb, p.ya, p.yb)
-	print(-p.xa, -p.ya)
 	translatePurple(p, -p.xa, -p.ya)
-	printPurpleTS(p)
 	local j = w / p.xb
 	scalePurple(p, j, j)
 end
@@ -199,37 +199,46 @@ local function insertAtCursor(cur, curt)
 --		o = o[cur[i]]
 --	end
 	local i = cur[#cur-1]
-	print("  " .. curt)
 end
 
 local hd = 0
+
+function mouseToCursor(p)
+	local x, y = love.mouse.getPosition()
+	local curs = {}
+	for i=1,#p.glyphs do
+		if x > p.glyphs[i].xa and x < p.glyphs[i].xb and
+		   y > p.glyphs[i].ya and y < p.glyphs[i].yb then
+			local cur = {}
+			cur.curt = p.glyphs[i].curt
+			for j=1,#p.glyphs[i].cur do
+				table.insert(cur, p.glyphs[i].cur[j])
+			end
+			insertAtCursor(p.glyphs[i].cur, curt)
+			table.insert(curs, cur)
+		end
+	end
+	return curs
+end
+
 function love.draw()
 	local p = getPurple(orange)
 	cameraPurple(p, 100, 100)
 	purpleGenGlyphBounds(p)
-	--printPurple(p)
---	for k,v in pairs(p.glyphs) do
---		print(v.xa, v.ya, v.xb, v.yb)
---	end
-	local x, y = love.mouse.getPosition()
-	for i=1,#p.glyphs do
-		if x > p.glyphs[i].xa and x < p.glyphs[i].xb and
-		   y > p.glyphs[i].ya and y < p.glyphs[i].yb then
-			io.write("hovering over")
-			local curt = p.glyphs[i].curt
-			for j=1,#p.glyphs[i].cur do
-				io.write(" ")
-				io.write(p.glyphs[i].cur[j])
-			end
-			io.write("\n")
-			insertAtCursor(p.glyphs[i].cur, curt)
+	if love.mouse.isDown(1) then
+		local curs = mouseToCursor(p)
+		if #curs > 0 then
+			print(curs[1].curt .. " " .. table.concat(curs[1], " "))
 		end
 	end
-	io.flush()
---	print(string.format("drawing %d glyphs", #p.glyphs))
 	drawPurple(p)
-	if hd > 0 then
-		love.timer.sleep(1)
-	end
 	hd = hd + 1
+end
+
+function love.update(_)
+	for e, a, b, c in love.event.poll() do
+		print("event", e)
+		if e == "q" or e == "quit" then
+		end
+	end
 end
