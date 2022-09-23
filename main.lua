@@ -1,11 +1,6 @@
 local orange = {}
 orange.type = "multiline"
-local cursor = {}
-if true then
-	local hhh = {}
-	hhh.type = "line"
-	table.insert(orange, hhh)
-end
+local globCursor = {}
 
 local Curt = {
 	glyph = 0,
@@ -194,11 +189,28 @@ local function purpleGenGlyphBounds(p)
 end
 
 local function insertAtCursor(cur, curt)
+	print(curt .. "  " .. table.concat(cur, " "))
 	local o = orange
---	for i=1,#cur-1 do
---		o = o[cur[i]]
---	end
-	local i = cur[#cur-1]
+	for i=1,#cur-1 do
+		o = o[cur[i]]
+	end
+	local i = cur[#cur]
+	if curt == "line-new" then
+		local lo = {}
+		lo.type = "line"
+		table.insert(o, i, lo)
+	end
+end
+
+local function removeAtCursor(cur, curt)
+	local o = orange
+	for i=1,#cur-1 do
+		o = o[cur[i]]
+	end
+	local i = cur[#cur]
+	if curt == "line-block" then
+		table.remove(o, i)
+	end
 end
 
 local hd = 0
@@ -214,13 +226,15 @@ function mouseToCursor(p)
 			for j=1,#p.glyphs[i].cur do
 				table.insert(cur, p.glyphs[i].cur[j])
 			end
-			insertAtCursor(p.glyphs[i].cur, curt)
 			table.insert(curs, cur)
 		end
 	end
 	return curs
 end
 
+
+local adowntime = 0
+local remdowntime = 0
 function love.draw()
 	local p = getPurple(orange)
 	cameraPurple(p, 100, 100)
@@ -229,7 +243,24 @@ function love.draw()
 		local curs = mouseToCursor(p)
 		if #curs > 0 then
 			print(curs[1].curt .. " " .. table.concat(curs[1], " "))
+			globCursor = curs[1]
 		end
+	end
+	if love.keyboard.isDown("a") then
+		adowntime = adowntime + 1
+	else
+		adowntime = 0
+	end
+	if love.keyboard.isDown("backspace") then
+		remdowntime = remdowntime + 1
+	else
+		remdowntime = 0
+	end
+	if adowntime == 1 then
+		insertAtCursor(globCursor, globCursor.curt)
+	end
+	if remdowntime == 1 then
+		removeAtCursor(globCursor, globCursor.curt)
 	end
 	drawPurple(p)
 	hd = hd + 1
