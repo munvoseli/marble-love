@@ -2,9 +2,9 @@ local orange = {}
 orange.type = "multiline"
 cursor = {}
 if true then
-	h = {}
-	h.type = "line"
-	table.insert(orange, h)
+	hhh = {}
+	hhh.type = "line"
+	table.insert(orange, hhh)
 end
 
 Curt = {
@@ -126,13 +126,18 @@ function getPurple(o, upcur, n)
 	elseif o.type == "multiline" then
 		-- p = emptyPurple()
 		p = getCursor(cur, "line-new")
+		print(p, p.glyphs)
 		for i = 1,#o do
 			sp = getPurple(o[i], cur, i)
 			pp = getCursor(cur, "line-block")
 			translatePurple(sp, pp.xb, p.ya - sp.yb)
 			translatePurple(pp, 0, p.ya - sp.yb)
+			print(p, pp)
+			print(p.glyphs, pp.glyphs)
+			--print(#p.glyphs, #sp.glyphs, #pp.glyphs)
 			addPurple(p, sp)
 			addPurple(p, pp)
+			print(#sp.glyphs, #pp.glyphs)
 			spn = getCursor(cur, "line-new")
 			translatePurple(spn, 0, p.ya - spn.yb)
 			addPurple(p, spn)
