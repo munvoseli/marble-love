@@ -132,7 +132,7 @@ local function getPurple(o, upcur, n)
 		local p = emptyPurple()
 		for i=1,#o do
 			local sp = getPurple(o[i], cur, i)
-			translatePurple(sp, 0, p.xb - sp.xa)
+			translatePurple(sp, p.xb - sp.xa, 0)
 			addPurple(p, sp)
 		end
 		return p
@@ -141,12 +141,19 @@ local function getPurple(o, upcur, n)
 		for i = 1,#o do
 			local sp = getPurple(o[i], cur, i)
 			local pp = getCursorN(cur, "line-block", i)
-			translatePurple(sp, pp.xb - pp.xa, p.ya - sp.yb)
-			translatePurple(pp, 0, p.yb - sp.ya)
+			local pad = 0
+			local h = math.max(sp.yb - sp.ya, pp.yb - pp.ya)
+			local y0 = p.yb
+			local ym = y0 + h/2 + pad
+			-- ya -> ym - (yb-ya)/2 = ym + ya/2 - yb/2
+			-- yb -> ym + (yb-ya)/2
+			-- diff = ym - (ya+yb)/2
+			translatePurple(sp, pp.xb - pp.xa, ym - (sp.ya+sp.yb)/2)
+			translatePurple(pp, 0, ym - (pp.ya+pp.yb)/2)
 			addPurple(p, sp)
 			addPurple(p, pp)
 			local spn = getCursorN(cur, "line-new", i + 1)
-			translatePurple(spn, 0, p.yb - spn.ya)
+			translatePurple(spn, 0, p.yb - spn.ya + pad)
 			addPurple(p, spn)
 		end
 		return p
@@ -199,6 +206,14 @@ local function insertAtCursor(cur, curt)
 		local lo = {}
 		lo.type = "line"
 		table.insert(o, i, lo)
+	elseif curt == "line-block" then
+		local go = {}
+		go.type = "gly"
+		table.insert(o[i], 1, go)
+	elseif curt == "glyph" then
+		local go = {}
+		go.type = "gly"
+		table.insert(o, i + 1, go)
 	end
 end
 
@@ -210,12 +225,14 @@ local function removeAtCursor(cur, curt)
 	local i = cur[#cur]
 	if curt == "line-block" then
 		table.remove(o, i)
+	elseif curt == "glyph" then
+		table.remove(o, i)
 	end
 end
 
 local hd = 0
 
-function mouseToCursor(p)
+local function mouseToCursor(p)
 	local x, y = love.mouse.getPosition()
 	local curs = {}
 	for i=1,#p.glyphs do
@@ -235,6 +252,20 @@ end
 
 local adowntime = 0
 local remdowntime = 0
+
+function love.load()
+	love.keyboard.setTextInput(true)
+end
+
+function love.keypressed(key)
+	print(key)
+	if key == "backspace" then
+		removeAtCursor(globCursor, globCursor.curt)
+	elseif key == "a" then
+		insertAtCursor(globCursor, globCursor.curt)
+	end
+end
+
 function love.draw()
 	local p = getPurple(orange)
 	cameraPurple(p, 100, 100)
@@ -246,30 +277,6 @@ function love.draw()
 			globCursor = curs[1]
 		end
 	end
-	if love.keyboard.isDown("a") then
-		adowntime = adowntime + 1
-	else
-		adowntime = 0
-	end
-	if love.keyboard.isDown("backspace") then
-		remdowntime = remdowntime + 1
-	else
-		remdowntime = 0
-	end
-	if adowntime == 1 then
-		insertAtCursor(globCursor, globCursor.curt)
-	end
-	if remdowntime == 1 then
-		removeAtCursor(globCursor, globCursor.curt)
-	end
 	drawPurple(p)
 	hd = hd + 1
-end
-
-function love.update(_)
-	for e, a, b, c in love.event.poll() do
-		print("event", e)
-		if e == "q" or e == "quit" then
-		end
-	end
 end
