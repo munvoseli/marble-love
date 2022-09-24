@@ -1,6 +1,9 @@
 local orange = {}
 orange.type = "multiline"
 local globCursor = {}
+globCursor.curt = "none"
+--local font = love.graphics.newFont("glyphs.ttf")
+--love.graphics.setFont(font)
 
 local Curt = {
 	glyph = 0,
@@ -112,6 +115,7 @@ local function getPurple(o, upcur, n)
 		r.xb = 40
 		r.ya = -20
 		r.yb = 60
+		r.symb = o.symb
 		local p = {}
 		p.xa = r.xa
 		p.xb = r.xb
@@ -162,24 +166,29 @@ local function getPurple(o, upcur, n)
 end
 
 local function drawPurple(p)
-	local cam = {}
-	cam.tx = 0
-	cam.ty = 0
-	cam.sx = 1
-	cam.sy = 1
+	-- local cam = {}
+	-- cam.tx = 0
+	-- cam.ty = 0
+	-- cam.sx = 1
+	-- cam.sy = 1
 	for i=1,#p.glyphs do
 		local x = p.glyphs[i].xa
 		local y = p.glyphs[i].ya
 		local w = p.glyphs[i].xb - x
 		local h = p.glyphs[i].yb - y
+		love.graphics.setColor(1, 1, 1)
 		love.graphics.rectangle("fill", x, y, w, h)
+		if p.glyphs[i].ref.symb then
+			love.graphics.setColor(0, 0, 0)
+			love.graphics.print(p.glyphs[i].ref.symb, x+w/2, y+h/2)
+		end
 	end
 end
 
 local function cameraPurple(p, w, h)
 	translatePurple(p, -p.xa, -p.ya)
 	local j = w / p.xb
-	scalePurple(p, j, j)
+	--scalePurple(p, j, j)
 end
 
 local function purpleGenGlyphBounds(p)
@@ -195,7 +204,7 @@ local function purpleGenGlyphBounds(p)
 	end
 end
 
-local function insertAtCursor(cur, curt)
+local function insertAtCursor(cur, curt, symb)
 	print(curt .. "  " .. table.concat(cur, " "))
 	local o = orange
 	for i=1,#cur-1 do
@@ -205,14 +214,20 @@ local function insertAtCursor(cur, curt)
 	if curt == "line-new" then
 		local lo = {}
 		lo.type = "line"
+		local go = {}
+		go.type = "gly"
+		go.symb = symb
+		table.insert(lo, go)
 		table.insert(o, i, lo)
 	elseif curt == "line-block" then
 		local go = {}
 		go.type = "gly"
+		go.symb = symb
 		table.insert(o[i], 1, go)
 	elseif curt == "glyph" then
 		local go = {}
 		go.type = "gly"
+		go.symb = symb
 		table.insert(o, i + 1, go)
 	end
 end
@@ -261,8 +276,8 @@ function love.keypressed(key)
 	print(key)
 	if key == "backspace" then
 		removeAtCursor(globCursor, globCursor.curt)
-	elseif key == "a" then
-		insertAtCursor(globCursor, globCursor.curt)
+	else
+		insertAtCursor(globCursor, globCursor.curt, key)
 	end
 end
 
