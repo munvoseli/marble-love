@@ -2,8 +2,8 @@ local orange = {}
 orange.type = "multiline"
 local globCursor = {}
 globCursor.curt = "none"
---local font = love.graphics.newFont("glyphs.ttf")
---love.graphics.setFont(font)
+local font = love.graphics.newFont("glyphs.ttf", 60)
+love.graphics.setFont(font)
 
 local Curt = {
 	glyph = 0,
@@ -111,10 +111,12 @@ local function getPurple(o, upcur, n)
 	end
 	if o.type == "gly" then
 		local r = {}
+		local w = font:getWidth(o.symb)
+		local h = font:getHeight()
 		r.xa = 0
-		r.xb = 40
-		r.ya = -20
-		r.yb = 60
+		r.xb = w
+		r.ya = 0
+		r.yb = h
 		r.symb = o.symb
 		local p = {}
 		p.xa = r.xa
@@ -180,7 +182,7 @@ local function drawPurple(p)
 		love.graphics.rectangle("fill", x, y, w, h)
 		if p.glyphs[i].ref.symb then
 			love.graphics.setColor(0, 0, 0)
-			love.graphics.print(p.glyphs[i].ref.symb, x+w/2, y+h/2)
+			love.graphics.print(p.glyphs[i].ref.symb, x, y)
 		end
 	end
 end
@@ -204,7 +206,8 @@ local function purpleGenGlyphBounds(p)
 	end
 end
 
-local function insertAtCursor(cur, curt, symb)
+local function insertAtCursor(cur, symb)
+	local curt = cur.curt
 	print(curt .. "  " .. table.concat(cur, " "))
 	local o = orange
 	for i=1,#cur-1 do
@@ -219,16 +222,21 @@ local function insertAtCursor(cur, curt, symb)
 		go.symb = symb
 		table.insert(lo, go)
 		table.insert(o, i, lo)
+		table.insert(cur, 1)
+		cur.curt = "glyph"
 	elseif curt == "line-block" then
 		local go = {}
 		go.type = "gly"
 		go.symb = symb
 		table.insert(o[i], 1, go)
+		table.insert(cur, 1)
+		cur.curt = "glyph"
 	elseif curt == "glyph" then
 		local go = {}
 		go.type = "gly"
 		go.symb = symb
 		table.insert(o, i + 1, go)
+		cur[#cur] = cur[#cur] + 1
 	end
 end
 
@@ -242,6 +250,7 @@ local function removeAtCursor(cur, curt)
 		table.remove(o, i)
 	elseif curt == "glyph" then
 		table.remove(o, i)
+		cur[#cur] = cur[#cur] - 1
 	end
 end
 
@@ -276,8 +285,8 @@ function love.keypressed(key)
 	print(key)
 	if key == "backspace" then
 		removeAtCursor(globCursor, globCursor.curt)
-	else
-		insertAtCursor(globCursor, globCursor.curt, key)
+	elseif #key == 1 then
+		insertAtCursor(globCursor, key)
 	end
 end
 
