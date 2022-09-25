@@ -11,6 +11,20 @@ local Curt = {
 	multiline = 2
 }
 
+local function dumpOrange(o, cur)
+	if o.type == nil then
+		print(table.concat(cur, " ") .. "  [nil type]")
+	else
+		print(table.concat(cur, " ") .. "  " .. o.type)
+	end
+	for i=1,#o do
+		table.insert(cur, i)
+		dumpOrange(o[i], cur)
+		table.remove(cur)
+	end
+end
+dumpOrange(orange, {})
+
 local function printPurple(p)
 	for i=1,#p.glyphs do
 		print(i, p.glyphs[i].curt, p.glyphs[i].xa, p.glyphs[i].xb, p.glyphs[i].ya, p.glyphs[i].yb)
@@ -163,6 +177,15 @@ local function getPurple(o, upcur, n)
 			addPurple(p, spn)
 		end
 		return p
+	elseif o.type == "for" then
+		local mp = getPurple(o[3], cur, 3)
+		local go = {}
+		go.type = "gly"
+		go.symb = "f"
+		local fp = getPurple(go)
+		translatePurple(mp, fp.xb, 0)
+		addPurple(fp, mp)
+		return fp
 	end
 	assert(false, string.format("Type %s not handled.", o.type))
 end
@@ -254,6 +277,59 @@ local function removeAtCursor(cur, curt)
 	end
 end
 
+local function actionAtCursor(cur)
+	local oo = orange
+	for i=1,#cur-2 do
+		oo = oo[cur[i]]
+	end
+	local i = cur[#cur-1]
+	local j = cur[#cur]
+	print(table.concat(cur, ", "))
+	if oo[i].type == "line" then
+		local k = j
+		local s = ""
+		while true do
+			if k == 0 then
+				break
+			end
+			if oo[i][k].symb == nil then
+				break
+			end
+			if not #oo[i][k].symb == 1 then
+				break
+			end
+			if oo[i][k].symb == " " then
+				break
+			end
+			s = oo[i][k].symb .. s
+			k = k - 1
+		end
+		print(s)
+		local line = oo[i]
+		if s == "for" and oo.type == "multiline" then
+			local foro = {}
+			local mlo = {}
+			mlo.type = "multiline"
+			table.insert(foro, {})
+			table.insert(foro, {})
+			table.insert(foro, mlo)
+			foro.type = "for"
+			oo[i] = foro
+		else
+			if k > 0 then
+				assert(line[k].symb == " ")
+				table.remove(line, k)
+			else
+				k = 1
+			end
+			if s == "a" then
+				line[k].symb = "A"
+				cur[#cur] = cur[#cur] - 1
+			end
+		end
+	end
+end
+
 local hd = 0
 
 local function mouseToCursor(p)
@@ -287,6 +363,12 @@ function love.keypressed(key)
 		removeAtCursor(globCursor, globCursor.curt)
 	elseif #key == 1 then
 		insertAtCursor(globCursor, key)
+	elseif key == "space" then
+		insertAtCursor(globCursor, " ")
+	elseif key == "return" then
+		actionAtCursor(globCursor)
+	elseif key == "escape" then
+		dumpOrange(orange, {})
 	end
 end
 
