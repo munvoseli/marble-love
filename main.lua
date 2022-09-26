@@ -114,6 +114,11 @@ local function getCursor(upcur, t)
 	return getCursorN(upcur, t, 0)
 end
 
+local function addMid(ap, bp)
+	translatePurple(bp, ap.xb - ap.xa, -(bp.ya+bp.yb)/2)
+	translatePurple(ap, 0, -(ap.ya+ap.yb)/2)
+	addPurple(ap, bp)
+end
 
 local function getPurple(o, upcur, n)
 	local cur = {}
@@ -183,6 +188,14 @@ local function getPurple(o, upcur, n)
 		go.type = "gly"
 		go.symb = "f"
 		local fp = getPurple(go)
+		local scp = getCursorN(cur, "line-nodel", 1)
+		local slin = getPurple(o[1], cur, 1)
+		table.insert(cur, 2)
+		local mcp = getCursorN(cur, "line-nodel", 0)
+		table.remove(cur)
+		addMid(scp, slin)
+		translatePurple(scp, 0, fp.yb - scp.ya)
+		addPurple(fp, scp)
 		translatePurple(mp, fp.xb, 0)
 		addPurple(fp, mp)
 		return fp
@@ -247,7 +260,7 @@ local function insertAtCursor(cur, symb)
 		table.insert(o, i, lo)
 		table.insert(cur, 1)
 		cur.curt = "glyph"
-	elseif curt == "line-block" then
+	elseif curt == "line-block" or curt == "line-nodel" then
 		local go = {}
 		go.type = "gly"
 		go.symb = symb
@@ -310,8 +323,12 @@ local function actionAtCursor(cur)
 			local foro = {}
 			local mlo = {}
 			mlo.type = "multiline"
-			table.insert(foro, {})
-			table.insert(foro, {})
+			local alo = {}
+			alo.type = "line"
+			local blo = {}
+			blo.type = "line"
+			table.insert(foro, alo)
+			table.insert(foro, blo)
 			table.insert(foro, mlo)
 			foro.type = "for"
 			oo[i] = foro
@@ -322,10 +339,18 @@ local function actionAtCursor(cur)
 			else
 				k = 1
 			end
-			if s == "a" then
-				line[k].symb = "A"
-				cur[#cur] = cur[#cur] - 1
+			for i=1,#s do
+				table.remove(line, k)
 			end
+			cur[#cur] = cur[#cur] - #s
+			local go = {}
+			go.type = "gly"
+			if s == "a" then
+				go.symb = "A"
+			elseif s == "add" then
+				go.symb = "+"
+			end
+			table.insert(line, k, go)
 		end
 	end
 end
