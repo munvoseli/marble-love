@@ -3,6 +3,11 @@ orange.type = "multiline"
 local globCursor = {}
 globCursor.curt = "none"
 local font = love.graphics.newFont("glyphs.ttf", 60)
+local fonts = {}
+for i=-2,1 do -- 0 is normal
+	local size = 2 ^ (i) * 60
+	fonts[i] = love.graphics.newFont("glyphs.ttf", size)
+end
 love.graphics.setFont(font)
 
 local Curt = {
@@ -105,6 +110,7 @@ local function getCursorN(upcur, t, n)
 	g.ref = r
 	g.cur = cur
 	g.curt = t
+	g.bgclr = {0.6, 0.8, 1}
 	p.glyphs = {}
 	table.insert(p.glyphs, g)
 	return p
@@ -150,6 +156,8 @@ local function getPurple(o, upcur, n)
 		g.ref = r
 		g.cur = cur
 		g.curt = "glyph"
+		g.fgclr = {0, 0, 0}
+		g.bgclr = {1, 1, 1}
 		p.glyphs = {}
 		table.insert(p.glyphs, g)
 		return p
@@ -186,14 +194,16 @@ local function getPurple(o, upcur, n)
 		local mp = getPurple(o[3], cur, 3)
 		local go = {}
 		go.type = "gly"
-		go.symb = "f"
+		go.symb = "F"
 		local fp = getPurple(go)
+		scalePurple(fp, 2, 2)
 		local scp = getCursorN(cur, "line-nodel", 1)
 		local slin = getPurple(o[1], cur, 1)
 		table.insert(cur, 2)
 		local mcp = getCursorN(cur, "line-nodel", 0)
 		table.remove(cur)
 		addMid(scp, slin)
+		scalePurple(scp, 0.5, 0.5)
 		translatePurple(scp, 0, fp.yb - scp.ya)
 		addPurple(fp, scp)
 		translatePurple(mp, fp.xb, 0)
@@ -204,6 +214,7 @@ local function getPurple(o, upcur, n)
 end
 
 local function drawPurple(p)
+	love.graphics.clear(1, 1, 1)
 	-- local cam = {}
 	-- cam.tx = 0
 	-- cam.ty = 0
@@ -214,10 +225,22 @@ local function drawPurple(p)
 		local y = p.glyphs[i].ya
 		local w = p.glyphs[i].xb - x
 		local h = p.glyphs[i].yb - y
-		love.graphics.setColor(1, 1, 1)
+		local g = p.glyphs[i]
+		local c = g.bgclr
+		love.graphics.setColor(c[1], c[2], c[3])
 		love.graphics.rectangle("fill", x, y, w, h)
 		if p.glyphs[i].ref.symb then
-			love.graphics.setColor(0, 0, 0)
+			if p.glyphs[i].sx == 0.25 then
+				love.graphics.setFont(fonts[-2])
+			elseif p.glyphs[i].sx == 0.5 then
+				love.graphics.setFont(fonts[-1])
+			elseif p.glyphs[i].sx == 1 then
+				love.graphics.setFont(fonts[0])
+			elseif p.glyphs[i].sx == 2 then
+				love.graphics.setFont(fonts[1])
+			end
+			local c = g.fgclr
+			love.graphics.setColor(c[1], c[2], c[3])
 			love.graphics.print(p.glyphs[i].ref.symb, x, y)
 		end
 	end
@@ -345,10 +368,12 @@ local function actionAtCursor(cur)
 			cur[#cur] = cur[#cur] - #s
 			local go = {}
 			go.type = "gly"
-			if s == "a" then
+			if s == "a" then -- assign
 				go.symb = "A"
 			elseif s == "add" then
 				go.symb = "+"
+			elseif s == "in" then
+				go.symb = "B"
 			end
 			table.insert(line, k, go)
 		end
