@@ -1,7 +1,10 @@
 font = love.graphics.newFont("charis.ttf", 30)
+love.graphics.setFont(font)
 
 local otoc = require("otoc")
 local otop = require("otop")
+
+local funcPurple = otop.emptyPurple()
 
 local orange = {
 	type = "multiline",
@@ -11,7 +14,7 @@ local globCursor = {}
 globCursor.curt = "none"
 
 
-local symb = {
+local extsymb = {
 	func = {
 		{
 			"printint",
@@ -24,9 +27,9 @@ local symb = {
 		}
 	},
 	var = {
-		"int", "a",
-		"int", "b",
-		"int", "c"
+		{ "int", "a" },
+		{ "int", "b" },
+		{ "int", "c" }
 	}
 }
 
@@ -64,15 +67,38 @@ local function printPurpleTS(p)
 	end
 end
 
+local function drawWorm(text, x, y)
+	local w = font:getWidth(text)
+	local h = font:getHeight()
+	love.graphics.setColor(0.1, 0.1, 0.1)
+	love.graphics.rectangle("fill", x, y, w, h)
+	love.graphics.setColor(0.7, 0.7, 0.7)
+	love.graphics.print(text, x, y)
+	return w, h
+end
+
+local function drawSymbols()
+	love.graphics.setBlendMode("subtract")
+	local y = 0
+	local x = 600
+	for i=1,#extsymb.func do
+		local t = extsymb.func[i][1]
+		local w, h = drawWorm(t, x, y)
+		y = y + h * 1.2
+	end
+	for i=1,#extsymb.var do
+		local t = extsymb.var[i][2]
+		local w, h = drawWorm(t, x, y)
+		y = y + h * 1.2
+	end
+end
 
 local function drawPurple(p)
-	love.graphics.clear(1, 1, 1)
 	-- local cam = {}
 	-- cam.tx = 0
 	-- cam.ty = 0
 	-- cam.sx = 1
 	-- cam.sy = 1
-	love.graphics.setFont(font)
 	love.graphics.setBlendMode("subtract")
 	for i=1,#p.glyphs do
 		local x = p.glyphs[i].xa
@@ -80,15 +106,27 @@ local function drawPurple(p)
 		local w = p.glyphs[i].xb - x
 		local h = p.glyphs[i].yb - y
 		local g = p.glyphs[i]
-		local c = g.bgclr
+		--local c = g.bgclr
 		--love.graphics.setColor(c[1], c[2], c[3])
 		love.graphics.setColor(0.1, 0.1, 0.1)
 		love.graphics.rectangle("fill", x, y, w, h)
 		if p.glyphs[i].ref.symb then
-			local c = g.fgclr
+			--local c = g.fgclr
 			--love.graphics.setColor(c[1], c[2], c[3])
 			love.graphics.setColor(0.7, 0.7, 0.7)
 			love.graphics.print(p.glyphs[i].ref.symb, x, y)
+		end
+	end
+end
+
+function love.mousepressed(x, y, button, istouch, presses)
+	if x > 600 then
+		
+	else
+		local curs = mouseToCursor(funcPurple)
+		if #curs > 0 then
+			print(curs[1].curt .. " " .. table.concat(curs[1], " "))
+			globCursor = curs[1]
 		end
 	end
 end
@@ -210,7 +248,7 @@ local function actionAtCursor(cur)
 				k = 1
 				cur[#cur] = cur[#cur] + 1
 			end
-			for i=1,#s do
+			for l=1,#s do
 				table.remove(line, k)
 			end
 			cur[#cur] = cur[#cur] - #s
@@ -257,6 +295,7 @@ local remdowntime = 0
 
 function love.load()
 	love.keyboard.setTextInput(true)
+	print(love.window.setMode(1200, 600))
 end
 
 function love.keypressed(key)
@@ -275,16 +314,11 @@ function love.keypressed(key)
 end
 
 function love.draw()
-	local p = otop.getPurple(orange)
-	cameraPurple(p, 100, 100)
-	purpleGenGlyphBounds(p)
-	if love.mouse.isDown(1) then
-		local curs = mouseToCursor(p)
-		if #curs > 0 then
-			print(curs[1].curt .. " " .. table.concat(curs[1], " "))
-			globCursor = curs[1]
-		end
-	end
-	drawPurple(p)
+	funcPurple = otop.getPurple(orange)
+	cameraPurple(funcPurple, 100, 100)
+	purpleGenGlyphBounds(funcPurple)
+	love.graphics.clear(1, 1, 1)
+	drawPurple(funcPurple)
+	drawSymbols()
 	hd = hd + 1
 end

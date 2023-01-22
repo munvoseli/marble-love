@@ -178,5 +178,6 @@ end
 
 M.getPurple = getPurple
 M.translatePurple = translatePurple
+M.emptyPurple = emptyPurple
 
 return M
