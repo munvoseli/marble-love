@@ -1,53 +1,4 @@
---[[
-contains
-functions for conversion from Orange to Purple
-operations for translating, scaling, constructing, and layering Purple-s
-    (instrumentally)
---]]
 local M = {}
-
-local function addPurple(a, b)
-	for i=1,#b.glyphs do
-		table.insert(a.glyphs, b.glyphs[i])
-	end
-	a.xa = math.min(a.xa, b.xa)
-	a.ya = math.min(a.ya, b.ya)
-	a.xb = math.max(a.xb, b.xb)
-	a.yb = math.max(a.yb, b.yb)
-end
-
-local function translatePurple(p, x, y)
-	p.xa = p.xa + x
-	p.xb = p.xb + x
-	p.ya = p.ya + y
-	p.yb = p.yb + y
-	for i=1,#p.glyphs do
-		p.glyphs[i].tx = p.glyphs[i].tx + x
-		p.glyphs[i].ty = p.glyphs[i].ty + y
-	end
-end
-local function scalePurple(p, x, y)
-	p.xa = p.xa * x
-	p.xb = p.xb * x
-	p.ya = p.ya * y
-	p.yb = p.yb * y
-	for i=1,#p.glyphs do
-		p.glyphs[i].tx = p.glyphs[i].tx * x
-		p.glyphs[i].ty = p.glyphs[i].ty * y
-		p.glyphs[i].sx = p.glyphs[i].sx * x
-		p.glyphs[i].sy = p.glyphs[i].sy * y
-	end
-end
-
-local function emptyPurple()
-	local p = {}
-	p.xa = 0
-	p.ya = 0
-	p.xb = 0
-	p.yb = 0
-	p.glyphs = {}
-	return p
-end
 
 local function getCursorN(upcur, t, n)
 	local cur = {}
@@ -81,12 +32,6 @@ end
 
 local function getCursor(upcur, t)
 	return getCursorN(upcur, t, 0)
-end
-
-local function addMid(ap, bp)
-	translatePurple(bp, ap.xb - ap.xa, -(bp.ya+bp.yb)/2)
-	translatePurple(ap, 0, -(ap.ya+ap.yb)/2)
-	addPurple(ap, bp)
 end
 
 local function getPurple(o, upcur, n)
@@ -176,8 +121,10 @@ local function getPurple(o, upcur, n)
 	assert(false, string.format("Type %s not handled.", o.type))
 end
 
-M.getPurple = getPurple
-M.translatePurple = translatePurple
-M.emptyPurple = emptyPurple
+local function orangeToPurple(o)
+	return getPurple(o, {}, 0)
+end
+
+M.orangeToPurple = orangeToPurple
 
 return M
