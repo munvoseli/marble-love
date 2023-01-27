@@ -8,8 +8,18 @@ local putil = require("putil")
 local funcPurple = putil.emptyPurple()
 
 local orange = {
-	type = "multiline",
-	lines = {}
+	tag = "multiline",
+	lines = {
+		{
+			tag = "fcall",
+			func = "hello",
+			args = { {
+				tag = "raw",
+				stuff = "5"
+			}
+			}
+		}
+	}
 }
 local globCursor = {}
 globCursor.curt = "none"
@@ -42,10 +52,10 @@ local Curt = {
 }
 
 local function dumpOrange(o, cur)
-	if o.type == nil then
+	if o.tag == nil then
 		print(table.concat(cur, " ") .. "  [nil type]")
 	else
-		print(table.concat(cur, " ") .. "  " .. o.type)
+		print(table.concat(cur, " ") .. "  " .. o.tag)
 	end
 	for i=1,#o do
 		table.insert(cur, i)
@@ -102,20 +112,16 @@ local function drawPurple(p)
 	-- cam.sy = 1
 	love.graphics.setBlendMode("subtract")
 	for i=1,#p.glyphs do
-		local x = p.glyphs[i].xa
-		local y = p.glyphs[i].ya
-		local w = p.glyphs[i].xb - x
-		local h = p.glyphs[i].yb - y
 		local g = p.glyphs[i]
-		--local c = g.bgclr
-		--love.graphics.setColor(c[1], c[2], c[3])
+		local x = g.xa
+		local y = g.ya
+		local w = g.xb - x
+		local h = g.yb - y
 		love.graphics.setColor(0.1, 0.1, 0.1)
 		love.graphics.rectangle("fill", x, y, w, h)
-		if p.glyphs[i].ref.symb then
-			--local c = g.fgclr
-			--love.graphics.setColor(c[1], c[2], c[3])
+		if g.tag == "text" then
 			love.graphics.setColor(0.7, 0.7, 0.7)
-			love.graphics.print(p.glyphs[i].ref.symb, x, y)
+			love.graphics.print(g.text, x, y)
 		end
 	end
 end

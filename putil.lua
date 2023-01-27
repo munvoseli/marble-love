@@ -10,12 +10,6 @@ local function addPurple(a, b)
 	a.yb = math.max(a.yb, b.yb)
 end
 
-local function addMid(ap, bp)
-	translatePurple(bp, ap.xb - ap.xa, -(bp.ya+bp.yb)/2)
-	translatePurple(ap, 0, -(ap.ya+ap.yb)/2)
-	addPurple(ap, bp)
-end
-
 local function translatePurple(p, x, y)
 	p.xa = p.xa + x
 	p.xb = p.xb + x
@@ -26,6 +20,23 @@ local function translatePurple(p, x, y)
 		p.glyphs[i].ty = p.glyphs[i].ty + y
 	end
 end
+
+local function addMid(ap, bp)
+	translatePurple(bp, ap.xb - ap.xa, -(bp.ya+bp.yb)/2)
+	translatePurple(ap, 0, -(ap.ya+ap.yb)/2)
+	addPurple(ap, bp)
+end
+
+local function addBottom(ap, bp) -- align on left
+	translatePurple(bp, ap.xa - bp.xa, ap.yb - bp.ya)
+	addPurple(ap, bp)
+end
+
+local function addRight(ap, bp) -- align on bottom
+	translatePurple(bp, ap.xb - bp.xa, ap.yb - bp.yb)
+	addPurple(ap, bp)
+end
+
 local function scalePurple(p, x, y)
 	p.xa = p.xa * x
 	p.xb = p.xb * x
@@ -50,16 +61,19 @@ local function emptyPurple()
 end
 
 local function stringPurple(text)
+	local w = font:getWidth(text)
+	local h = font:getHeight()
 	local g = {
 		tag = "text",
 		tx = 0, ty = 0, sx = 1, sy = 1,
+		w = w, h = h,
 		text = text
 	}
 	local p = {
 		xa = 0,
 		ya = 0,
-		xb = font:getWidth(text),
-		yb = font:getHeight(),
+		xb = w,
+		yb = h,
 		glyphs = { g }
 	}
 	return p
@@ -83,19 +97,18 @@ end
 
 local function genGlyphBounds(p)
 	for i=1,#p.glyphs do
-		p.glyphs[i].xa =
-		 p.glyphs[i].ref.xa * p.glyphs[i].sx + p.glyphs[i].tx
-		p.glyphs[i].xb =
-		 p.glyphs[i].ref.xb * p.glyphs[i].sx + p.glyphs[i].tx
-		p.glyphs[i].ya =
-		 p.glyphs[i].ref.ya * p.glyphs[i].sy + p.glyphs[i].ty
-		p.glyphs[i].yb =
-		 p.glyphs[i].ref.yb * p.glyphs[i].sy + p.glyphs[i].ty
+		local g = p.glyphs[i]
+		g.xa = g.tx
+		g.ya = g.ty
+		g.xb = g.tx + g.w
+		g.yb = g.ty + g.h
 	end
 end
 
 
 M.addPurple = addPurple
+M.addBottom = addBottom
+M.addRight = addRight
 M.translatePurple = translatePurple
 M.emptyPurple = emptyPurple
 M.stringPurple = stringPurple

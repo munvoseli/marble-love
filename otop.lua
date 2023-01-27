@@ -1,128 +1,68 @@
 local M = {}
 
-local function getCursorN(upcur, t, n)
-	local cur = {}
-	for i=1,#upcur do
-		table.insert(cur, upcur[i])
+local putil = require("putil")
+
+local function getArgPlaceholder(fo, i)
+	local p = putil.rectPurple(40, 40)
+	p.glyphs[1].onclick = function()
+		fo.args[i] = nil
 	end
-	table.insert(cur, n)
-	local r = {}
-	r.xa = 0
-	r.xb = 40
-	r.ya = 0
-	r.yb = 40
-	local p = {}
-	p.xa = r.xa
-	p.xb = r.xb
-	p.ya = r.ya
-	p.yb = r.yb
-	local g = {}
-	g.tx = 0
-	g.ty = 0
-	g.sx = 1
-	g.sy = 1
-	g.ref = r
-	g.cur = cur
-	g.curt = t
-	g.bgclr = {0.6, 0.8, 1}
-	p.glyphs = {}
-	table.insert(p.glyphs, g)
 	return p
 end
 
-local function getCursor(upcur, t)
-	return getCursorN(upcur, t, 0)
+local function getLinePlaceholder(mo, i)
+	local p = putil.rectPurple(40, 40)
+	p.glyphs[1].onclick = function()
+		assert(false, "need to implement putting things")
+	end
+	return p
 end
 
-local function getPurple(o, upcur, n)
-	local cur = {}
-	if upcur ~= nil then
-		for i=1,#upcur do
-			table.insert(cur, upcur[i])
-		end
-		table.insert(cur, n)
-	end
-	if o.type == "gly" then
-		local r = {}
-		local w = font:getWidth(o.symb)
-		local h = font:getHeight()
-		r.xa = 0
-		r.xb = w
-		r.ya = 0
-		r.yb = h
-		r.symb = o.symb
-		local p = {}
-		p.xa = r.xa
-		p.xb = r.xb
-		p.ya = r.ya
-		p.yb = r.yb
-		local g = {}
-		g.tx = 0
-		g.ty = 0
-		g.sx = 1
-		g.sy = 1
-		g.ref = r
-		g.cur = cur
-		g.curt = "glyph"
-		g.fgclr = {0, 0, 0}
-		g.bgclr = {1, 1, 1}
-		p.glyphs = {}
-		table.insert(p.glyphs, g)
-		return p
-	elseif o.type == "line" then
-		local p = emptyPurple()
-		for i=1,#o do
-			local sp = getPurple(o[i], cur, i)
-			translatePurple(sp, p.xb - sp.xa, 0)
-			addPurple(p, sp)
-		end
-		return p
-	elseif o.type == "multiline" then
-		local p = getCursorN(cur, "line-new", 1)
-		for i = 1,#o.lines do
-			local sp = getPurple(o.lines[i], cur, i)
-			local pp = getCursorN(cur, "line-block", i)
-			local pad = 0
-			local h = math.max(sp.yb - sp.ya, pp.yb - pp.ya)
-			local y0 = p.yb
-			local ym = y0 + h/2 + pad
-			-- ya -> ym - (yb-ya)/2 = ym + ya/2 - yb/2
-			-- yb -> ym + (yb-ya)/2
-			-- diff = ym - (ya+yb)/2
-			translatePurple(sp, pp.xb - pp.xa, ym - (sp.ya+sp.yb)/2)
-			translatePurple(pp, 0, ym - (pp.ya+pp.yb)/2)
-			addPurple(p, sp)
-			addPurple(p, pp)
-			local spn = getCursorN(cur, "line-new", i + 1)
-			translatePurple(spn, 0, p.yb - spn.ya + pad)
-			addPurple(p, spn)
-		end
-		return p
-	elseif o.type == "for" then
-		local mp = getPurple(o[3], cur, 3)
-		local go = {}
-		go.type = "gly"
-		go.symb = "F"
-		local fp = getPurple(go)
-		scalePurple(fp, 2, 2)
-		local scp = getCursorN(cur, "line-nodel", 1)
-		local slin = getPurple(o[1], cur, 1)
-		table.insert(cur, 2)
-		local mcp = getCursorN(cur, "line-nodel", 0)
-		table.remove(cur)
-		addMid(scp, slin)
-		scalePurple(scp, 0.5, 0.5)
-		translatePurple(scp, 0, fp.yb - scp.ya)
-		addPurple(fp, scp)
-		translatePurple(mp, fp.xb, 0)
-		addPurple(fp, mp)
-		return fp
-	end
-	assert(false, string.format("Type %s not handled.", o.type))
-end
+--[[
+you know,
+ides were always kind of confusing to me
+what you type is not what appears
+
+in the case of adding brackets and parentheses,
+brackets are added automatically,
+but it isn't shown which brackets you can type over
+or what you will add
+
+adding brackets manually is more pona,
+but is also not fun
+--]]
 
 local function orangeToPurple(o)
-	return getPurple(o, {}, 0)
+	local tag = o.tag
+	if tag == "multiline" then
+		local p = getLinePlaceholder(o, 1)
+		for i = 1,#o.lines do
+			local sp = orangeToPurple(o.lines[i])
+			putil.addBottom(p, sp)
+			local pp = getLinePlaceholder(o, i + 1)
+			putil.addBottom(p, pp)
+		end
+		return p
+	elseif tag == "fcall" then
+		local p = putil.emptyPurple()
+		for i = 1,#o.args do
+			if o.args[i] == nil then
+				local pp = getArgPlaceholder(o, i)
+				putil.addRight(p, pp)
+			else
+				local pp = orangeToPurple(o.args[i])
+				putil.addRight(p, pp)
+			end
+		end
+		local ap = putil.stringPurple(o.func)
+		putil.addBottom(p, ap)
+		return p
+	elseif tag == "if" then
+	elseif tag == "lit" then
+	elseif tag == "raw" then
+		return putil.stringPurple(o.stuff)
+	end
+	assert(false, string.format("Type %s not handled.", tag))
 end
 
 M.orangeToPurple = orangeToPurple
