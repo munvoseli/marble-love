@@ -1,5 +1,7 @@
 local M = {}
 
+local pad = 10
+
 local function addPurple(a, b)
 	for i=1,#b.glyphs do
 		table.insert(a.glyphs, b.glyphs[i])
@@ -28,12 +30,12 @@ local function addMid(ap, bp)
 end
 
 local function addBottom(ap, bp) -- align on left
-	translatePurple(bp, ap.xa - bp.xa, ap.yb - bp.ya)
+	translatePurple(bp, ap.xa - bp.xa, ap.yb - bp.ya + pad)
 	addPurple(ap, bp)
 end
 
 local function addRight(ap, bp) -- align on bottom
-	translatePurple(bp, ap.xb - bp.xa, ap.yb - bp.yb)
+	translatePurple(bp, ap.xb - bp.xa + pad, ap.yb - bp.yb)
 	addPurple(ap, bp)
 end
 

@@ -33,8 +33,10 @@ local function orangeToc(o)
 		return res
 	elseif tag == "fcall" then
 		res = o.func .. "("
-		for i = 1,#o.args do
-			res = res .. orangeToc(o.args[i])
+		for i = 1,#o.argt do
+			if o.args[i] ~= nil then
+				res = res .. orangeToc(o.args[i])
+			end
 			if i ~= #o.args then
 				res = res .. ", "
 			end

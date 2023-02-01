@@ -1,9 +1,26 @@
 local M = {}
 
+--[[
+feature multiplicity
+same thing in different ways
+++
+ ++
++= 1
+= 1 +
+--]]
+
 local putil = require("putil")
 
 local function getArgPlaceholder(fo, i)
 	local p = putil.rectPurple(40, 40)
+	p.glyphs[1].onclick = function()
+		fo.args[i] = selsym
+	end
+	return p
+end
+
+local function getArgTrashcan(fo, i)
+	local p = putil.rectPurple(20, 20)
 	p.glyphs[1].onclick = function()
 		fo.args[i] = nil
 	end
@@ -11,9 +28,9 @@ local function getArgPlaceholder(fo, i)
 end
 
 local function getLinePlaceholder(mo, i)
-	local p = putil.rectPurple(40, 40)
+	local p = putil.rectPurple(40, 20)
 	p.glyphs[1].onclick = function()
-		assert(false, "need to implement putting things")
+		table.insert(mo.lines, i, selsym)
 	end
 	return p
 end
@@ -44,18 +61,18 @@ local function orangeToPurple(o)
 		end
 		return p
 	elseif tag == "fcall" then
-		local p = putil.emptyPurple()
-		for i = 1,#o.args do
+		local p = putil.stringPurple(o.func)
+		for i = 1,#o.argt do
 			if o.args[i] == nil then
 				local pp = getArgPlaceholder(o, i)
 				putil.addRight(p, pp)
 			else
 				local pp = orangeToPurple(o.args[i])
+				local tp = getArgTrashcan(o, i)
+				putil.addBottom(pp, tp)
 				putil.addRight(p, pp)
 			end
 		end
-		local ap = putil.stringPurple(o.func)
-		putil.addBottom(p, ap)
 		return p
 	elseif tag == "if" then
 	elseif tag == "lit" then
@@ -66,5 +83,10 @@ local function orangeToPurple(o)
 end
 
 M.orangeToPurple = orangeToPurple
+
+--[[
+i need to make a version control system called flowey
+fill ur repos with determination
+--]]
 
 return M

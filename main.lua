@@ -1,4 +1,5 @@
 font = love.graphics.newFont("charis.ttf", 30)
+selsym = {}
 love.graphics.setFont(font)
 
 local otoc = require("otoc")
@@ -13,7 +14,8 @@ local orange = {
 		{
 			tag = "fcall",
 			func = "hello",
-			args = { {
+			argt = { "int", "int", "int" },
+			args = { nil, {
 				tag = "raw",
 				stuff = "5"
 			}
@@ -21,20 +23,20 @@ local orange = {
 		}
 	}
 }
-local globCursor = {}
-globCursor.curt = "none"
-
 
 local extsymb = {
 	func = {
 		{
 			"printint",
-			"r", "int"
+			{ "r", "int" }
 		},{
 			"add",
-			"w", "int",
-			"r", "int",
-			"r", "int"
+			{ "w", "int" },
+			{ "r", "int" },
+			{ "r", "int" }
+		},{
+			"set-one",
+			{ "w", "int" },
 		}
 	},
 	var = {
@@ -145,8 +147,22 @@ function love.mousepressed(x, y, button, istouch, presses)
 		if i < #extsymb.func then
 			i = i + 1
 			print(extsymb.func[i][1])
+			local argt = {}
+			for j = 2,#extsymb.func[i] do
+				table.insert(argt, extsymb.func[i][j][1])
+			end
+			selsym = {
+				tag = "fcall",
+				func = extsymb.func[i][1],
+				argt = argt,
+				args = {}
+			}
 		else
 			i = i - #extsymb.func + 1
+			selsym = {
+				tag = "raw",
+				stuff = extsymb.var[i][2]
+			}
 			print(extsymb.var[i][2])
 		end
 	else
@@ -155,6 +171,7 @@ function love.mousepressed(x, y, button, istouch, presses)
 			glyphs[1].onclick()
 		end
 	end
+	print(otoc.orangeToc(orange))
 end
 
 local function cameraPurple(p, w, h)
